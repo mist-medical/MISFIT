@@ -163,7 +163,7 @@ Train a small model on 4 GPUs using `torchrun`.
 
 ```console
 torchrun --nproc_per_node=4 \
-    $(which misfit_train) \
+    -m misfit.cli.train_entrypoint \
         --index   /data/index.parquet \
         --results /runs/exp1 \
         --model   swinunetr-small

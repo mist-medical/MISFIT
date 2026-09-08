@@ -6,15 +6,20 @@ Single-GPU::
 
 Multi-GPU (single node)::
 
-    torchrun --nproc_per_node=4 $(which misfit_train) \\
+    torchrun --nproc_per_node=4 -m misfit.cli.train_entrypoint \\
         --index index.parquet --results /runs/exp1 --model swinunetr-base
 
 Multi-node (4 nodes × 8 GPUs)::
 
     torchrun --nproc_per_node=8 --nnodes=4 \\
              --node_rank=<rank> --master_addr=<addr> --master_port=29500 \\
-             $(which misfit_train) \\
+             -m misfit.cli.train_entrypoint \\
         --index index.parquet --results /runs/exp1 --model swinunetr-base
+
+``torchrun -m misfit.cli.train_entrypoint`` needs nothing on ``PATH`` and no
+shell, so it is the form to use in a container image or a Kubernetes manifest
+(``$(which misfit_train)`` only works when a shell evaluates it). ``torchrun
+$(which misfit_train)`` still works from an interactive shell.
 """
 from argparse import ArgumentDefaultsHelpFormatter
 
@@ -37,3 +42,7 @@ def train_entry(args=None) -> None:
     ns = _parse_args(args)
     trainer = MAETrainer(ns)
     trainer.train()
+
+
+if __name__ == "__main__":
+    train_entry()

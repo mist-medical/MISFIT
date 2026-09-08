@@ -99,6 +99,12 @@ All argument parsing lives in `cli/args.py`. The `ArgParser` subclass adds
 `.arg()` and `.flag()` shorthands. `add_*_args` functions are shared across the
 individual entrypoints.
 
+Every `*_entrypoint.py` ends with `if __name__ == "__main__": <x>_entry()` so it
+is runnable as `python -m misfit.cli.<x>_entrypoint` — this is the form
+`torchrun -m misfit.cli.train_entrypoint` and shell-less container/Kubernetes
+manifests use instead of `$(which misfit_train)`. `tests/unit/test_packaging.py`
+guards both the guard block and the `-m` path.
+
 ## Module map
 
 ```

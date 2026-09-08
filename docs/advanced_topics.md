@@ -227,11 +227,17 @@ MISFIT uses `torch.distributed` and can be launched with `torchrun` on any
 cluster that supports NCCL. Distributed setup is handled automatically when
 `torchrun` sets the `LOCAL_RANK` environment variable.
 
+`-m misfit.cli.train_entrypoint` is the training target: it needs nothing on
+`PATH` and no shell, so it works identically from an interactive shell, inside a
+container image, and in a Kubernetes `command:` array. `$(which misfit_train)`
+also works, but only when a shell evaluates it — a bare `command` / `args` list
+in a pod spec passes the literal string `$(which` to Python.
+
 ### Single node, multiple GPUs
 
 ```console
 torchrun --nproc_per_node=4 \
-    $(which misfit_train) \
+    -m misfit.cli.train_entrypoint \
         --index      /data/index.parquet \
         --results    /runs/exp1 \
         --batch-size 2
@@ -254,10 +260,29 @@ torchrun --nnodes=2 \
          --node_rank=$SLURM_NODEID \
          --master_addr=$MASTER_ADDR \
          --master_port=29500 \
-    $(which misfit_train) \
+    -m misfit.cli.train_entrypoint \
         --index   /data/index.parquet \
         --results /runs/exp1
 ```
+
+### Kubernetes
+
+A pod's `command` / `args` go straight to `execve` — there is no shell — so
+`$(which misfit_train)` reaches Python as the literal string `$(which`. Use the
+`-m` form (nothing to resolve), or run the command through an explicit shell:
+
+```yaml
+# Direct — no shell.
+command: ["torchrun", "--nproc_per_node=4", "-m", "misfit.cli.train_entrypoint"]
+args: ["--index", "/data/index.parquet", "--results", "/runs/exp1"]
+
+# Or, to keep $(...) / env-var expansion, wrap it:
+command: ["bash", "-lc"]
+args: ["torchrun --nproc_per_node=4 -m misfit.cli.train_entrypoint --index ..."]
+```
+
+Multi-pod `Job`s set `--nnodes` / `--node_rank` / `--master_addr` /
+`--master_port` exactly as in the SLURM example above.
 
 ### If a multi-GPU run hangs at startup
 
@@ -274,15 +299,15 @@ separate sockets. Fixes, in order of preference:
 
 ```console
 # 1. Pick GPUs on one socket (same CPU-affinity range) — best interconnect.
-CUDA_VISIBLE_DEVICES=0,1 torchrun --nproc_per_node=2 $(which misfit_train) ...
+CUDA_VISIBLE_DEVICES=0,1 torchrun --nproc_per_node=2 -m misfit.cli.train_entrypoint ...
 
 # 2. Keep all the GPUs, let NCCL use NVLink where it exists and shared memory
 #    across the gap.
-NCCL_P2P_LEVEL=NVL torchrun --nproc_per_node=4 $(which misfit_train) ...
+NCCL_P2P_LEVEL=NVL torchrun --nproc_per_node=4 -m misfit.cli.train_entrypoint ...
 
 # 3. Disable direct P2P entirely — always works, uses shared-memory staging
 #    (some throughput cost).
-NCCL_P2P_DISABLE=1 torchrun --nproc_per_node=4 $(which misfit_train) ...
+NCCL_P2P_DISABLE=1 torchrun --nproc_per_node=4 -m misfit.cli.train_entrypoint ...
 ```
 
 ---

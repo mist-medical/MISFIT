@@ -63,3 +63,7 @@ def inspect_entry(args=None) -> None:
         device=ns.device,
         split=ns.split or None,
     )
+
+
+if __name__ == "__main__":
+    inspect_entry()

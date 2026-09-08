@@ -148,7 +148,7 @@ misfit_train --index   /data/index.parquet \
              --results /runs/exp1
 
 # 4 GPUs — batch size scales automatically
-torchrun --nproc_per_node=4 $(which misfit_train) \
+torchrun --nproc_per_node=4 -m misfit.cli.train_entrypoint \
     --index   /data/index.parquet \
     --results /runs/exp1
 

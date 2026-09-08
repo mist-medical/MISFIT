@@ -85,3 +85,7 @@ def evaluate_entry(args=None) -> None:
         seed=ns.seed,
     )
     evaluator.run()
+
+
+if __name__ == "__main__":
+    evaluate_entry()

@@ -7,12 +7,12 @@ training via torchrun. The same code runs in all three configurations:
     misfit_train --index index.parquet --results /runs/exp1 ...
 
     # 4-GPU single node
-    torchrun --nproc_per_node=4 $(which misfit_train) ...
+    torchrun --nproc_per_node=4 -m misfit.cli.train_entrypoint ...
 
     # 4 nodes x 8 GPUs = 32 GPUs
     torchrun --nproc_per_node=8 --nnodes=4 \\
              --node_rank=<rank> --master_addr=<addr> --master_port=29500 \\
-             $(which misfit_train) ...
+             -m misfit.cli.train_entrypoint ...
 
 Distributed setup is torchrun-native: RANK, LOCAL_RANK, and WORLD_SIZE are
 read from environment variables set by torchrun. No mp.spawn is used, making
@@ -138,7 +138,8 @@ class MAETrainer:
             print_warning(
                 f"{n} GPUs are visible but misfit_train was not launched with "
                 f"torchrun; only cuda:0 will be used. For multi-GPU training, "
-                f"run:\n  torchrun --nproc_per_node={n} $(which misfit_train) ..."
+                f"run:\n  torchrun --nproc_per_node={n} "
+                f"-m misfit.cli.train_entrypoint ..."
             )
 
     # ------------------------------------------------------------------

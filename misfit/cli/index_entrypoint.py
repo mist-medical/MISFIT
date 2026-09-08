@@ -145,3 +145,7 @@ def index_entry(args=None) -> None:
     )
 
     sys.exit(1 if errors else 0)
+
+
+if __name__ == "__main__":
+    index_entry()
